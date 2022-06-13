@@ -1,13 +1,18 @@
 package com.requerimentos.acompanhamento_de_requerimentos;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
+import java.util.List;
 
-@SpringBootApplication
+@SpringBootApplication(exclude={DataSourceAutoConfiguration.class})
 public class AcompanhamentoDeRequerimentosApplication {
 
 	public static void main(String[] args) {
@@ -17,26 +22,45 @@ public class AcompanhamentoDeRequerimentosApplication {
 }
 
 @RestController
-class RequerimentoController(RequerimentoService service) {
+class RequerimentoController {
+        private RequerimentoService service;
 
         @GetMapping("/requerimentos")
-        ArrayList<Protocolo> index() {
-            return service.findRequerimentos();
+        List<Protocolo> index() {
+            return this.service.findRequerimentos();
         }
 
         @GetMapping("/requerimentos/{id}")
-        ArrayList<Protocolo> index(@PathVariable("id") int id) {
-            return service.findRequerimentoById(id);
+        Protocolo index(@PathVariable("id") int id) {
+            return this.service.findRequerimentoById(id);
         }
 
         @PostMapping("/requerimentos")
         void post(@RequestBody Protocolo requerimento) {
-            service.post(requerimento);
+            this.service.postRequerimento(requerimento);
         }
 }
 
 @Service
-class RequerimentoService(JdbcTemplate db) {
+class RequerimentoService {
+    @Autowired
+    private JdbcTemplate db;
 
+    List<Protocolo> findRequerimentos() {
+        return this.db.query("SELECT * from protocolos", BeanPropertyRowMapper.newInstance(Protocolo.class));
+    }
+
+    Protocolo findRequerimentoById(int id) {
+        try {
+            Protocolo protocolo = this.db.queryForObject("SELECT * FROM tutorials WHERE id=?", BeanPropertyRowMapper.newInstance(Protocolo.class), id);
+            return protocolo;
+        } catch (IncorrectResultSizeDataAccessException e) {
+            return null;
+        }
+    }
+
+    int postRequerimento(Protocolo protocolo) {
+        return this.db.update("INSERT INTO tutorials (idProtocolo, nomeProtocolo, dataCadastro, dataAtualizacao, stProtocolo) VALUES(?,?,?,?,?)",
+                new Object[] { protocolo.getIdProtocolo(), protocolo.getNomeProtocolo(), protocolo.getDataCadastro(), protocolo.getDataAtualizacao(), protocolo.isStProtocolo() });
+    }
 }
-
