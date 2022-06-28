@@ -1,0 +1,21 @@
+# Use postgres/example user/password credentials
+version: '3.1'
+
+services:
+  postgres:
+    image: postgres
+    volumes:
+      - ./.postgres:/data/postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: database
+      PGDATA: /data/postgres
+    networks:
+      - postgres
+
+networks:
+  postgres:
+    driver: bridge
